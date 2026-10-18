@@ -56,10 +56,23 @@ function createBotInstance() {
       try { client.write('finish_configuration', {}); } catch (e) {}
     }
 
-    // 4. Handle proxy network custom channel payloads to prevent timeouts
+    // 4. FIX: Handle official branding channels correctly without triggering "Invalid custom payload"
     if (metadata.name === 'custom_payload' || metadata.name === 'plugin_message') {
       try {
-        client.write('custom_payload', { channel: data.channel, data: Buffer.alloc(0) });
+        // Only reply if the server checks for the client brand
+        if (data.channel === 'minecraft:brand' || data.channel === 'brand') {
+          // Format a vanilla client brand signature packet correctly
+          const brandString = "vanilla";
+          const dataBuffer = Buffer.alloc(brandString.length + 1);
+          dataBuffer.writeUInt8(brandString.length, 0);
+          dataBuffer.write(brandString, 1);
+
+          client.write('custom_payload', {
+            channel: data.channel,
+            data: dataBuffer
+          });
+        }
+        // Safely ignore all other hidden tracking channels so the server doesn't kick us
       } catch (e) {}
     }
 
@@ -80,9 +93,8 @@ function createBotInstance() {
           }
         });
         
-        // TIMEOUT FIX: Start sending active player ticks so the proxy keeps the session open
         startHeartbeat(client);
-        console.log("[Fixed Timeout] Position heartbeat and connection ticks active.");
+        console.log("[Fixed Payload] Vanilla client brand signature active.");
       } catch (e) {}
     }
   });
@@ -104,13 +116,11 @@ function createBotInstance() {
   client.on('error', () => {});
 }
 
-// Sends basic position tracking packets to the server every 2 seconds so you never time out
 function startHeartbeat(client) {
   clearInterval(heartbeatInterval);
   heartbeatInterval = setInterval(() => {
     if (!botState.connected) return;
     try {
-      // Sends a "player is safely standing on the ground" update packet
       client.write('position', {
         x: 0.0,
         y: 70.0,
