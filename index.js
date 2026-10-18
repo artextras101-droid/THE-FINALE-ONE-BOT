@@ -35,7 +35,7 @@ const config = {
 // ============================================================
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT || 8080; // Bound to port 8080 to match your container settings
+const PORT = process.env.PORT || 8080;
 
 let botState = { connected: false };
 
@@ -69,11 +69,11 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[Web Dynamic Router] Monitoring portal operational on port ${PORT}`);
+  console.log(`[Web Router] Monitoring portal operational on port ${PORT}`);
 });
 
 // ============================================================
-// CORE BOT CLIENT MATRIX (VELOCITY BYPASS ENGINE)
+// CORE BOT CLIENT MATRIX (NETTY & COOKIE BYPASS ENGINE)
 // ============================================================
 let bot;
 let antiAfkInterval;
@@ -82,7 +82,6 @@ let chatLoopInterval;
 function startBot() {
   console.log(`[Client Engine] Binding automated socket to address: ${config.server.ip}`);
 
-  // Raw initialization parameter injection to force direct proxy clearance
   bot = mineflayer.createBot({
     host: config.server.ip,
     port: config.server.port,
@@ -90,21 +89,33 @@ function startBot() {
     version: config.server.version, 
     auth: "offline",
     
-    // CRITICAL PROXY BYPASSES FOR PLAY.HOSTING VELOCITY GATEWAYS
-    brand: 'vanilla',               // Forces Velocity proxy to read client as normal player
-    skipValidation: true,           // Skips certificate matching layers that crash Netty
-    checkTimeoutInterval: 120 * 1000, // Extends handshake buffer window
-    realms: true                    // Forces Mineflayer to run raw connection channels without early state pinging
+    // CRITICAL CORE PASSTHROUGH (STABILIZES THE VIAVERSION HANDSHAKE)
+    brand: 'vanilla',               
+    skipValidation: true,           
+    checkTimeoutInterval: 120 * 1000
   });
 
-  // Force kill early physical entity logic to block configuration-phase kicks
   bot.physicsEnabled = false;
 
-  // Intercept and bypass server-side resource pack arrays matching 1.21 protocols
+  // BYPASS COOKIE REQUESTS & CONFIGURATION KICKS
   bot.on('packet', (data, metadata) => {
-    if (metadata.name === 'select_known_packs' && bot._client?.state === 'configuration') {
+    if (!bot._client) return;
+
+    // 1. Intercept custom 1.21+ network resource packs
+    if (metadata.name === 'select_known_packs' && bot._client.state === 'configuration') {
       try {
         bot._client.write('select_known_packs', { knownPacks: [] });
+      } catch (e) {}
+    }
+
+    // 2. Intercept modern Velocity Netty Cookie Requests to stop "Internal server error"
+    if (metadata.name === 'cookie_request') {
+      try {
+        bot._client.write('cookie_response', {
+          key: data.key,
+          hasPayload: false,
+          payload: Buffer.alloc(0)
+        });
       } catch (e) {}
     }
   });
@@ -113,7 +124,6 @@ function startBot() {
     botState.connected = true;
     console.log(`[Success Hook] Profile ${bot.username} has stabilized in the game grid.`);
 
-    // Delay environmental activation until the map streaming sync is solid
     setTimeout(() => {
       if (bot) bot.physicsEnabled = true;
       console.log("[Engine Matrix] Tracking sub-modules initialized cleanly.");
@@ -134,13 +144,13 @@ function startBot() {
 
   bot.on("end", () => {
     botState.connected = false;
-    console.log(`[Socket Interrupted] Network gateway closed. Clearing context timers...`);
+    console.log(`[Socket Interrupted] Network gateway closed. Cleaning context...`);
     
     clearInterval(antiAfkInterval);
     clearInterval(chatLoopInterval);
 
     if (config.utils["auto-reconnect"]) {
-      console.log(`[Proxy Cooldown] Throttling reconnect loops by 15s to flush ViaVersion session data...`);
+      console.log(`[Proxy Cooldown] Waiting 15s to flush ViaVersion session data...`);
       setTimeout(() => {
         startBot();
       }, config.utils["auto-reconnect-delay"]);
@@ -170,5 +180,5 @@ function startChatLoop() {
   }, config.utils["chat-messages"]["repeat-delay"] * 1000);
 }
 
-// Fire application setup process
+// Start the integrated loop execution
 startBot();
