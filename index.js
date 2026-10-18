@@ -4,8 +4,8 @@ const mc = require("minecraft-protocol");
 const express = require("express");
 
 const config = {
-  host: "merge.play.hosting",
-  port: 25565,
+  host: "MERGESMO.aternos.me",
+  port: 23887,
   username: "ARTEX_SON_AFK",
   chat: {
     enabled: true,
