@@ -35,22 +35,40 @@ function createBotInstance() {
   });
 
   client.on('packet', (data, metadata) => {
+    // 1. Core Network Keep-Alive Loop
     if (metadata.name === 'keep_alive') {
       try { client.write('keep_alive', { keepAliveId: data.keepAliveId }); } catch (e) {}
     }
 
+    // 2. Intercept Velocity Proxy Cookie Requests
     if (metadata.name === 'cookie_request') {
       try {
         client.write('cookie_response', { key: data.key, hasPayload: false, payload: Buffer.alloc(0) });
       } catch (e) {}
     }
 
+    // 3. Bypass Network Configuration Handshake Checks
     if (metadata.name === 'select_known_packs' && client.state === 'configuration') {
       try { client.write('select_known_packs', { knownPacks: [] }); } catch (e) {}
     }
 
-    if (metadata.name === 'finish_configuration' || metadata.name === 'registry_data') {
-      try { client.write('finish_configuration', {}); } catch (e) {}
+    // 4. CRITICAL DISCONNECT FIX: Provide full client settings during the configuration state
+    if (metadata.name === 'select_known_packs' || metadata.name === 'registry_data') {
+      try {
+        // Forces the proxy to register client parameters before finishing configuration
+        client.write('client_information', {
+          locale: 'en_US',
+          viewDistance: 4,
+          chatFlags: 0,
+          chatColors: true,
+          skinParts: 127,
+          mainHand: 1,
+          enableTextFiltering: false,
+          allowServerListings: true
+        });
+        
+        client.write('finish_configuration', {});
+      } catch (e) {}
     }
 
     if (metadata.name === 'custom_payload' || metadata.name === 'plugin_message') {
@@ -65,13 +83,9 @@ function createBotInstance() {
       } catch (e) {}
     }
 
+    // 5. Spawn World Activation Sequence
     if (metadata.name === 'login' && client.state === 'play') {
       try {
-        client.write('settings', {
-          locale: 'en_US', viewDistance: 4, chatFlags: 0, chatColors: true,
-          skinParts: 127, mainHand: 1, enableTextFiltering: false, allowServerListings: true
-        });
-
         client.write('client_command', { actionId: 0 });
 
         client.write('chat_session_update', {
@@ -82,7 +96,7 @@ function createBotInstance() {
         });
         
         startHeartbeat(client);
-        console.log("[Stability Fix] Bot safely bypassed proxy layers.");
+        console.log("[Handshake Complete] Bot successfully bound to active world layer.");
       } catch (e) {}
     }
   });
@@ -95,11 +109,10 @@ function createBotInstance() {
 
   client.on('end', () => {
     botState.connected = false;
-    // CRITICAL TIMEOUT BYPASS: Stops immediate boot loops to flush the proxy firewall rules
-    console.log("[Proxy Mitigation] IP throttled. Cooling down for 5 minutes to clear host block...");
+    console.log("[Interrupted] Disconnected from proxy node. Re-engaging in 15s...");
     clearInterval(chatInterval);
     clearInterval(heartbeatInterval);
-    setTimeout(createBotInstance, 300000); // Forced 5-minute deep cooldown sleep
+    setTimeout(createBotInstance, 15000);
   });
 
   client.on('error', () => {});
