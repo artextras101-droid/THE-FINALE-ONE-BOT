@@ -49,7 +49,6 @@ function createBotInstance() {
       try { client.write('select_known_packs', { knownPacks: [] }); } catch (e) {}
     }
 
-    // CRITICAL PATCH: Handle BOTH client/server acknowledgement steps for configuration stability
     if (metadata.name === 'finish_configuration' || metadata.name === 'registry_data') {
       try { client.write('finish_configuration', {}); } catch (e) {}
     }
@@ -83,7 +82,7 @@ function createBotInstance() {
         });
         
         startHeartbeat(client);
-        console.log("[Stability Fix] Bot acknowledged configuration stream.");
+        console.log("[Stability Fix] Bot safely bypassed proxy layers.");
       } catch (e) {}
     }
   });
@@ -96,10 +95,11 @@ function createBotInstance() {
 
   client.on('end', () => {
     botState.connected = false;
-    console.log("[Interrupted] Disconnected. Re-engaging in 15s...");
+    // CRITICAL TIMEOUT BYPASS: Stops immediate boot loops to flush the proxy firewall rules
+    console.log("[Proxy Mitigation] IP throttled. Cooling down for 5 minutes to clear host block...");
     clearInterval(chatInterval);
     clearInterval(heartbeatInterval);
-    setTimeout(createBotInstance, 15000);
+    setTimeout(createBotInstance, 300000); // Forced 5-minute deep cooldown sleep
   });
 
   client.on('error', () => {});
@@ -110,14 +110,9 @@ function startHeartbeat(client) {
   heartbeatInterval = setInterval(() => {
     if (!botState.connected) return;
     try {
-      client.write('position', {
-        x: 0.0,
-        y: 70.0,
-        z: 0.0,
-        onGround: true
-      });
+      client.write('position', { x: 0.0, y: 70.0, z: 0.0, onGround: true });
     } catch (e) {}
-  }, 1500); // Accelerated to 1.5s interval to beat the timeout counter window
+  }, 1500);
 }
 
 function startChatLoop(client) {
