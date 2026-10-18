@@ -48,16 +48,15 @@ function createBotInstance() {
     hideErrors: true
   });
 
-  // Intercept and bypass server-side resource pack arrays matching 1.21 protocols
   client.on('packet', (data, metadata) => {
-    // 1. Standalone Keep-Alive verification loop
+    // 1. Keep-Alive validation loop
     if (metadata.name === 'keep_alive') {
       try {
         client.write('keep_alive', { keepAliveId: data.keepAliveId });
       } catch (e) {}
     }
 
-    // 2. Intercept modern Velocity Netty Cookie Requests
+    // 2. Intercept Velocity Netty Cookie Requests
     if (metadata.name === 'cookie_request') {
       try {
         client.write('cookie_response', {
@@ -75,10 +74,25 @@ function createBotInstance() {
       } catch (e) {}
     }
 
-    // 4. CRITICAL FIX: Tell the proxy the client successfully loaded the configuration phase
+    // 4. Force state completion during configuration handshake
     if (metadata.name === 'finish_configuration' || (metadata.name === 'registry_data' && client.state === 'configuration')) {
       try {
         client.write('finish_configuration', {});
+      } catch (e) {}
+    }
+
+    // 5. CRITICAL FIX: Send client commands immediately on entering play mode
+    if (metadata.name === 'login' && client.state === 'play') {
+      try {
+        // Send default client preferences
+        client.write('settings', {
+          locale: 'en_US', viewDistance: 4, chatFlags: 0, chatColors: true,
+          skinParts: 127, mainHand: 1, enableTextFiltering: false, allowServerListings: true
+        });
+
+        // IMMEDIATELY signal to the server that we are performing a safe login spawn
+        client.write('client_command', { actionId: 0 }); // Action 0 is 'Perform respawn/initial login confirmation'
+        console.log("[World Sync] Sent instant client confirmation commands.");
       } catch (e) {}
     }
   });
@@ -100,7 +114,7 @@ function createBotInstance() {
   });
 
   client.on('error', (err) => {
-    // Gracefully handle internal drops to maintain 24/7 uptime
+    // Gracefully catch background noise to maintain system uptime
   });
 }
 
@@ -111,12 +125,10 @@ function startChatLoop(client) {
   chatInterval = setInterval(() => {
     if (!botState.connected) return;
     try {
-      // Modern packet layout structure for direct chat injection strings
       client.write('chat', { message: config.chat.messages[index] });
       index = (index + 1) % config.chat.messages.length;
     } catch (e) {}
   }, config.chat.repeatDelay * 1000);
 }
 
-// Start the engine
 createBotInstance();
