@@ -8,7 +8,7 @@
   "server": {
     "ip": "merge.play.hosting",
     "port": 25565,
-    "version": "1.21.1",
+    "version": false,
     "try-creative": false
   },
   "position": {
@@ -31,6 +31,7 @@
       "repeat": true,
       "repeat-delay": 120,
       "messages": [
+        "/login qwerty101qwerty",
         "How are u?",
         "Chill!",
         "lol"
