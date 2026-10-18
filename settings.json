@@ -7,7 +7,7 @@
   },
   "server": {
     "ip": "merge.play.hosting",
-    "port": 19132,
+    "port": ,
     "version": "1.20.1",
     "try-creative": false
   },
