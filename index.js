@@ -4,7 +4,7 @@ const mineflayer = require("mineflayer");
 const express = require("express");
 
 // ============================================================
-// CONFIGURATION OVERRIDE MATRIX
+// EMBEDDED CONFIGURATION LAYERS
 // ============================================================
 const config = {
   "name": "AFK Bot",
@@ -31,11 +31,11 @@ const config = {
 };
 
 // ============================================================
-// EXPRESS WEB ENGINE (KEEP ALIVE ROUTER)
+// EXPRESS WEB ENGINE (KEEP ALIVE PORT ROUTER)
 // ============================================================
 const app = express();
 app.use(express.json());
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080; // Bound to port 8080 to match your container settings
 
 let botState = { connected: false };
 
@@ -73,7 +73,7 @@ app.listen(PORT, () => {
 });
 
 // ============================================================
-// CORE BOT CLIENT MATRIX (PROXY INJECTION PATCH)
+// CORE BOT CLIENT MATRIX (VELOCITY BYPASS ENGINE)
 // ============================================================
 let bot;
 let antiAfkInterval;
@@ -82,20 +82,25 @@ let chatLoopInterval;
 function startBot() {
   console.log(`[Client Engine] Binding automated socket to address: ${config.server.ip}`);
 
+  // Raw initialization parameter injection to force direct proxy clearance
   bot = mineflayer.createBot({
     host: config.server.ip,
     port: config.server.port,
     username: config["bot-account"].username,
     version: config.server.version, 
     auth: "offline",
-    brand: 'vanilla',                
-    skipValidation: true,            
-    checkTimeoutInterval: 90 * 1000  
+    
+    // CRITICAL PROXY BYPASSES FOR PLAY.HOSTING VELOCITY GATEWAYS
+    brand: 'vanilla',               // Forces Velocity proxy to read client as normal player
+    skipValidation: true,           // Skips certificate matching layers that crash Netty
+    checkTimeoutInterval: 120 * 1000, // Extends handshake buffer window
+    realms: true                    // Forces Mineflayer to run raw connection channels without early state pinging
   });
 
+  // Force kill early physical entity logic to block configuration-phase kicks
   bot.physicsEnabled = false;
 
-  // CRITICAL SEED: Intercept modern 1.21+ configuration phase packets to bypass Netty dropouts
+  // Intercept and bypass server-side resource pack arrays matching 1.21 protocols
   bot.on('packet', (data, metadata) => {
     if (metadata.name === 'select_known_packs' && bot._client?.state === 'configuration') {
       try {
@@ -108,10 +113,11 @@ function startBot() {
     botState.connected = true;
     console.log(`[Success Hook] Profile ${bot.username} has stabilized in the game grid.`);
 
+    // Delay environmental activation until the map streaming sync is solid
     setTimeout(() => {
       if (bot) bot.physicsEnabled = true;
       console.log("[Engine Matrix] Tracking sub-modules initialized cleanly.");
-    }, 4000);
+    }, 5000);
 
     if (config.utils["anti-afk"]?.enabled) {
       startAntiAfk();
@@ -164,4 +170,5 @@ function startChatLoop() {
   }, config.utils["chat-messages"]["repeat-delay"] * 1000);
 }
 
+// Fire application setup process
 startBot();
