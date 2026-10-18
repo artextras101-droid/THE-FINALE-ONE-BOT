@@ -19,8 +19,8 @@
   },
   "utils": {
     "auto-auth": {
-      "enabled": true,
-      "password": "qwerty101qwerty"
+      "enabled": false,
+      "password": ""
     },
     "anti-afk": {
       "enabled": true,
@@ -31,7 +31,6 @@
       "repeat": true,
       "repeat-delay": 120,
       "messages": [
-        "/login qwerty101qwerty",
         "How are u?",
         "Chill!",
         "lol"
@@ -39,24 +38,14 @@
     },
     "chat-log": true,
     "auto-reconnect": true,
-    "auto-reconnect-delay": 2000,
+    "auto-reconnect-delay": 15000,
     "max-reconnect-delay": 120000
   },
   "movement": {
     "enabled": false,
-    "circle-walk": {
-      "enabled": false,
-      "radius": 4,
-      "speed": 3000
-    },
-    "look-around": {
-      "enabled": false,
-      "interval": 5000
-    },
-    "random-jump": {
-      "enabled": false,
-      "interval": 10000
-    }
+    "circle-walk": { "enabled": false, "radius": 4, "speed": 3000 },
+    "look-around": { "enabled": false, "interval": 5000 },
+    "random-jump": { "enabled": false, "interval": 10000 }
   },
   "modules": {
     "avoidMobs": false,
@@ -76,11 +65,7 @@
   "discord": {
     "enabled": false,
     "webhookUrl": "",
-    "events": {
-      "connect": true,
-      "disconnect": true,
-      "chat": false
-    }
+    "events": { "connect": true, "disconnect": true, "chat": false }
   },
   "chat": {
     "respond": true
