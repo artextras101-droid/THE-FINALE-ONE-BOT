@@ -4,19 +4,19 @@ const mineflayer = require("mineflayer");
 const express = require("express");
 
 // ============================================================
-// PUT YOUR CONFIGURATION SETTINGS DIRECTLY HERE
+// CONFIGURATION OVERRIDE MATRIX
 // ============================================================
 const config = {
   "name": "AFK Bot",
   "bot-account": {
-    "username": "ARTEX's SON", // Put your preferred username here
+    "username": "ARTEX's SON",
     "password": "",
     "type": "offline"
   },
   "server": {
     "ip": "merge.play.hosting",
     "port": 25565,
-    "version": false // Leave as false so it automatically matches your server version
+    "version": false
   },
   "utils": {
     "anti-afk": { "enabled": true },
@@ -26,21 +26,18 @@ const config = {
       "messages": ["How are u?", "Chill!", "lol"]
     },
     "auto-reconnect": true,
-    "auto-reconnect-delay": 15000 // Forced 15 seconds to completely stop the Duplicate UUID kick bug
+    "auto-reconnect-delay": 15000
   }
 };
 
 // ============================================================
-// EXPRESS SERVER - Keep Render/Aternos alive
+// EXPRESS WEB ENGINE (KEEP ALIVE ROUTER)
 // ============================================================
 const app = express();
 app.use(express.json());
 const PORT = process.env.PORT || 5000;
 
-let botState = {
-  connected: false,
-  errors: []
-};
+let botState = { connected: false };
 
 app.get('/', (req, res) => {
   res.send(`
@@ -60,7 +57,7 @@ app.get('/', (req, res) => {
         <main>
           <h2>${config.name} Dashboard</h2>
           <p>Status: <span class="${botState.connected ? 'online' : 'offline'}">${botState.connected ? 'ONLINE' : 'OFFLINE'}</span></p>
-          <p>Connected to: <strong>${config.server.ip}</strong></p>
+          <p>Node Target: <strong>${config.server.ip}</strong></p>
         </main>
       </body>
     </html>
@@ -72,18 +69,18 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[Express Router] Dashboard web host running on port ${PORT}`);
+  console.log(`[Web Dynamic Router] Monitoring portal operational on port ${PORT}`);
 });
 
 // ============================================================
-// CORE MINECRAFT ENGINE MODULE WITH PROXY BYPASSES
+// CORE BOT CLIENT MATRIX (PROXY INJECTION PATCH)
 // ============================================================
 let bot;
 let antiAfkInterval;
 let chatLoopInterval;
 
 function startBot() {
-  console.log(`[Runtime] Linking instance to address: ${config.server.ip}`);
+  console.log(`[Client Engine] Binding automated socket to address: ${config.server.ip}`);
 
   bot = mineflayer.createBot({
     host: config.server.ip,
@@ -91,24 +88,29 @@ function startBot() {
     username: config["bot-account"].username,
     version: config.server.version, 
     auth: "offline",
-
-    // CRITICAL PROXY PASSTHROUGH PARAMETERS (BYPASSES VIAVERSION & VELOCITY KICKS)
     brand: 'vanilla',                
     skipValidation: true,            
     checkTimeoutInterval: 90 * 1000  
   });
 
-  // Turn off physics instantly on boot to stop "Internal server error" crash loops
   bot.physicsEnabled = false;
+
+  // CRITICAL SEED: Intercept modern 1.21+ configuration phase packets to bypass Netty dropouts
+  bot.on('packet', (data, metadata) => {
+    if (metadata.name === 'select_known_packs' && bot._client?.state === 'configuration') {
+      try {
+        bot._client.write('select_known_packs', { knownPacks: [] });
+      } catch (e) {}
+    }
+  });
 
   bot.once("spawn", () => {
     botState.connected = true;
-    console.log(`[Success Engine] ${bot.username} has stabilized inside the world map!`);
+    console.log(`[Success Hook] Profile ${bot.username} has stabilized in the game grid.`);
 
-    // Safely enable low-impact looking physics after client fully stabilizes
     setTimeout(() => {
       if (bot) bot.physicsEnabled = true;
-      console.log("[Engine Matrix] Environmental systems fully verified.");
+      console.log("[Engine Matrix] Tracking sub-modules initialized cleanly.");
     }, 4000);
 
     if (config.utils["anti-afk"]?.enabled) {
@@ -121,23 +123,18 @@ function startBot() {
   });
 
   bot.on("error", (err) => {
-    console.error(`[Socket Error] ${err.message}`);
-    botState.errors.push({ time: Date.now(), msg: err.message });
-  });
-
-  bot.on("kicked", (reason) => {
-    console.warn(`[Kicked From Server Layer] Reason: ${reason}`);
+    console.error(`[Socket Interface Exception] ${err.message}`);
   });
 
   bot.on("end", () => {
     botState.connected = false;
-    console.log(`[Socket Drop] Disconnected. Cleaning local loop cache...`);
+    console.log(`[Socket Interrupted] Network gateway closed. Clearing context timers...`);
     
     clearInterval(antiAfkInterval);
     clearInterval(chatLoopInterval);
 
     if (config.utils["auto-reconnect"]) {
-      console.log(`[Proxy Sync] Waiting 15 seconds to clear previous session ghost...`);
+      console.log(`[Proxy Cooldown] Throttling reconnect loops by 15s to flush ViaVersion session data...`);
       setTimeout(() => {
         startBot();
       }, config.utils["auto-reconnect-delay"]);
@@ -167,5 +164,4 @@ function startChatLoop() {
   }, config.utils["chat-messages"]["repeat-delay"] * 1000);
 }
 
-// Start the integrated execution process
 startBot();
