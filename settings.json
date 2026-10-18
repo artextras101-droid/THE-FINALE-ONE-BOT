@@ -12,14 +12,14 @@
     "try-creative": false
   },
   "position": {
-    "enabled": false,
+    "enabled": true,
     "x": 0,
     "y": 100,
     "z": 0
   },
   "utils": {
     "auto-auth": {
-      "enabled": false,
+      "enabled": true,
       "password": ""
     },
     "anti-afk": {
@@ -42,10 +42,10 @@
     "max-reconnect-delay": 120000
   },
   "movement": {
-    "enabled": false,
-    "circle-walk": { "enabled": false, "radius": 4, "speed": 3000 },
-    "look-around": { "enabled": false, "interval": 5000 },
-    "random-jump": { "enabled": false, "interval": 10000 }
+    "enabled": true,
+    "circle-walk": { "enabled": true, "radius": 4, "speed": 3000 },
+    "look-around": { "enabled": true, "interval": 15000 },
+    "random-jump": { "enabled": true, "interval": 10000 }
   },
   "modules": {
     "avoidMobs": false,
